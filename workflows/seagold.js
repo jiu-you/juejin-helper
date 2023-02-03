@@ -1,7 +1,7 @@
-import notification from "./utils/notification-kit";
 const JuejinHelper = require("juejin-helper");
 const utils = require("./utils/utils");
-const { Grid, Astar } = require("fast-astar");
+const {Grid, Astar} = require("fast-astar");
+const pushMessage = require("./utils/pushMessage");
 const env = require("./utils/env");
 
 class Seagold {
@@ -13,18 +13,18 @@ class Seagold {
   }
 
   nodeRules = [
-    { code: 0, hasBounty: false, isWall: false, name: "空地" },
-    { code: 2, hasBounty: true, isWall: false, name: "矿石", isBest: true },
-    { code: 3, hasBounty: false, isWall: false, name: "星星" },
-    { code: 4, hasBounty: false, isWall: true, name: "贝壳" },
-    { code: 5, hasBounty: false, isWall: true, name: "水母" },
-    { code: 6, hasBounty: false, isWall: true, name: "石头" },
-    { code: 10, hasBounty: true, isWall: false, name: "上指令" },
-    { code: 11, hasBounty: true, isWall: false, name: "下指令" },
-    { code: 12, hasBounty: true, isWall: false, name: "左指令" },
-    { code: 13, hasBounty: true, isWall: false, name: "右指令" },
-    { code: 14, hasBounty: true, isWall: false, name: "跳跃指令" },
-    { code: 15, hasBounty: true, isWall: false, name: "循环指令" }
+    {code: 0, hasBounty: false, isWall: false, name: "空地"},
+    {code: 2, hasBounty: true, isWall: false, name: "矿石", isBest: true},
+    {code: 3, hasBounty: false, isWall: false, name: "星星"},
+    {code: 4, hasBounty: false, isWall: true, name: "贝壳"},
+    {code: 5, hasBounty: false, isWall: true, name: "水母"},
+    {code: 6, hasBounty: false, isWall: true, name: "石头"},
+    {code: 10, hasBounty: true, isWall: false, name: "上指令"},
+    {code: 11, hasBounty: true, isWall: false, name: "下指令"},
+    {code: 12, hasBounty: true, isWall: false, name: "左指令"},
+    {code: 13, hasBounty: true, isWall: false, name: "右指令"},
+    {code: 14, hasBounty: true, isWall: false, name: "跳跃指令"},
+    {code: 15, hasBounty: true, isWall: false, name: "循环指令"}
   ];
 
   debug = false;
@@ -39,7 +39,7 @@ class Seagold {
   gameInfo = {
     gameId: "",
     mapData: [],
-    curPos: { x: 0, y: 0 },
+    curPos: {x: 0, y: 0},
     blockData: {
       moveUp: 0,
       moveDown: 0,
@@ -61,7 +61,7 @@ class Seagold {
     this.gameInfo = {
       gameId: "",
       mapData: [],
-      curPos: { x: 0, y: 0 },
+      curPos: {x: 0, y: 0},
       blockData: {
         moveUp: 0,
         moveDown: 0,
@@ -87,7 +87,7 @@ class Seagold {
   async gameStart() {
     if (this.isGaming) return;
     const roleId = Math.ceil(Math.random() * 3);
-    const gameInfo = await this.gameApi.gameStart({ roleId });
+    const gameInfo = await this.gameApi.gameStart({roleId});
 
     this.gameInfo = {
       roleId,
@@ -124,7 +124,9 @@ class Seagold {
     const bestNode = this.getBestNode(bmmap);
     const path = this.getRoutePath(bmmap, curNode, bestNode);
     if (!Array.isArray(path)) {
-      throw new Error(`路径 ${JSON.stringify(path)} 无法在地图 ${JSON.stringify(this.getMaze(bmmap))} 行进.`);
+      throw new Error(
+        `路径 ${JSON.stringify(path)} 无法在地图 ${JSON.stringify(this.getMaze(bmmap))} 行进.`
+      );
     }
     const commands = this.getCommands(path);
     if (commands.length <= 0) {
@@ -171,11 +173,11 @@ class Seagold {
       for (let x = 0; x < list.length; x++) {
         const cNode = list[x];
         if (cNode === node) {
-          return { x, y };
+          return {x, y};
         }
       }
     }
-    return { x: 0, y: 0 };
+    return {x: 0, y: 0};
   }
 
   getRoutePath(map, startNode, endNode) {
@@ -225,7 +227,7 @@ class Seagold {
 
   // 获取范围地图
   getBMMap() {
-    const { mapData, blockData, curPos } = this.gameInfo;
+    const {mapData, blockData, curPos} = this.gameInfo;
     const minX = Math.max(curPos.x - blockData.moveLeft, 0);
     const maxX = Math.min(curPos.x + blockData.moveRight, mapData[0].length - 1);
     const minY = Math.max(curPos.y - blockData.moveUp, 0);
@@ -249,8 +251,8 @@ class Seagold {
 
   getBestNode(map) {
     let bestNode = null;
-    map.forEach(row => {
-      row.forEach(node => {
+    map.forEach((row) => {
+      row.forEach((node) => {
         if (node.isBest && bestNode === null) {
           bestNode = node;
         } else if (node.isBest && node.bounty > bestNode.bounty) {
@@ -292,7 +294,7 @@ class Seagold {
   }
 
   getNodeRule(secret) {
-    return this.nodeRules.find(rule => {
+    return this.nodeRules.find((rule) => {
       const reg = new RegExp(`^${rule.code}`);
       return reg.test(secret);
     });
@@ -386,13 +388,17 @@ class Seagold {
   toString() {
     const userInfo = this.userInfo;
     const gameLives = this.history
-      .map(game => `${game.gameId}\n  挖取 ${game.gameDiamond}\n  获得 ${game.realDiamond}`)
+      .map((game) => `${game.gameId}\n  挖取 ${game.gameDiamond}\n  获得 ${game.realDiamond}`)
       .join("\n");
 
     return `
 掘友: ${userInfo.name}
 今日限制矿石数 ${userInfo.todayLimitDiamond}
-${userInfo.todayDiamond < userInfo.todayLimitDiamond ? `今日获取矿石数 ${userInfo.todayDiamond}` : "今日获取已达上限"}
+${
+  userInfo.todayDiamond < userInfo.todayLimitDiamond
+    ? `今日获取矿石数 ${userInfo.todayDiamond}`
+    : "今日获取已达上限"
+}
 ${this.history.length ? `\n游戏记录\n${gameLives}` : ""}
 `.trim();
   }
@@ -414,19 +420,25 @@ async function run(args) {
   }
 
   const message = messageList.join(`\n${"-".repeat(15)}\n`);
-  notification.pushMessage({
-    title: "海底掘金游戏",
-    content: message,
-    msgtype: "text"
+  pushMessage({
+    subject: "海底掘金游戏",
+    text: message
   });
 }
 
-run(process.argv.splice(2)).catch(error => {
-  notification.pushMessage({
-    title: "海底掘金游戏",
-    content: `<strong>Error</strong><pre>${error.message}</pre>`,
-    msgtype: "html"
-  });
+// run(process.argv.splice(2)).catch((error) => {
+//   pushMessage({
+//     subject: "海底掘金游戏",
+//     html: `
+// <strong>Error</strong>
+// <pre>${error.message}</pre>
+// <div>如果版本过低请前往升级: <a href="https://github.com/iDerekLi/juejin-helper">juejin-helper</a></div>
+// `.trim()
+//   });
 
-  throw error;
-});
+//   throw error;
+// });
+
+module.exports = {
+  run
+}
