@@ -1,0 +1,13 @@
+name: Keep Alive
+
+on:
+  schedule:
+    - cron: '0 0 */59 * *' # 每59天运行一次
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print keep-alive message
+        run: echo "This is a keep-alive run to prevent disablement."
