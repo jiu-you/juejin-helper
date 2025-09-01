@@ -1,4 +1,4 @@
-name: Auto
+name: Auto Check-In
 
 on:
   schedule:
@@ -24,26 +24,42 @@ jobs:
   CheckIn:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-      - name: Run Project
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: workflows/yarn.lock
+          
+      - name: Debug info
         run: |
+          echo "Current directory: $(pwd)"
+          echo "Listing files:"
+          ls -la
+          echo "Listing workflows directory:"
+          ls -la workflows/
+          
+      - name: Install dependencies
+        run: cd workflows && yarn install --frozen-lockfile
+        
+      - name: Run check-in with retry
+        run: |
+          cd workflows
           for attempt in {1..3}; do
-            cd workflows && yarn && yarn checkin && exit 0
-            echo "$attempt, retrying..."
-            sleep 1800
+            echo "Attempt $attempt of 3"
+            if yarn checkin; then
+              echo "Check-in successful on attempt $attempt"
+              exit 0
+            else
+              echo "Check-in failed on attempt $attempt"
+              if [ $attempt -lt 3 ]; then
+                echo "Waiting 30 minutes before next attempt..."
+                sleep 1800
+              fi
+            fi
           done
-          echo "All attempts failed."
+          echo "All check-in attempts failed"
           exit 1
-
-#  SeaGold:
-#    needs: CheckIn
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v2
-#      - uses: actions/setup-node@v2
-#      - name: Run Project
-#        run: |
-#          cd workflows
-#          yarn
-#          yarn seagold
